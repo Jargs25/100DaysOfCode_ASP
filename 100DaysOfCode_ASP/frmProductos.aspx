@@ -40,12 +40,18 @@
             </div>
         </asp:Panel>
         <asp:Panel ID="pnlMensaje" runat="server" GroupingText="Mensaje del sitio" Visible="False" Width="400px">
-            <asp:Label ID="lblMensaje" runat="server" Text=""></asp:Label>
+            <div>
+                <asp:Image ID="imgIcono" Width="100px" Height="100px" runat="server" Visible="False" />
+                <asp:Label ID="lblMensaje" runat="server" Text=""></asp:Label>
+            </div>
+            <div>
+                <asp:Button ID="btnAceptar" runat="server" Text="Aceptar" OnClick="btnAceptar_Click" />
+                <asp:Button ID="btnNo" runat="server" Text="No" OnClick="btnNo_Click" Visible="False" />
+            </div>
         </asp:Panel>
         <asp:Panel ID="pnlRegistros" runat="server" Width="400px" GroupingText="Registros">
-            <asp:GridView ID="gvRegistros" runat="server" AutoGenerateColumns="False" AutoGenerateSelectButton="True" OnSelectedIndexChanged="gvRegistros_SelectedIndexChanged">
+            <asp:GridView ID="gvRegistros" runat="server" AutoGenerateColumns="False" AutoGenerateSelectButton="True" OnSelectedIndexChanged="gvRegistros_SelectedIndexChanged" DataKeyNames="id">
                 <Columns>
-                    <asp:BoundField DataField="id" HeaderText="ID" Visible="False" />
                     <asp:BoundField DataField="codigo" HeaderText="Codigo" />
                     <asp:BoundField DataField="nombre" HeaderText="Nombre" />
                     <asp:BoundField DataField="cantidad" HeaderText="Cantidad" />

@@ -43,8 +43,7 @@ namespace _100DaysOfCode_ASP
             }
             else
             {
-                pnlMensaje.Visible = true;
-                lblMensaje.Text = "Por favor, verifique los campos.";
+                mostrarMensaje("Por favor, verifique los campos.",0,0);
             }
         }
         protected void btnModificar_Click(object sender, EventArgs e)
@@ -72,15 +71,20 @@ namespace _100DaysOfCode_ASP
             }
             else
             {
-                pnlMensaje.Visible = true;
-                lblMensaje.Text = "Por favor, verifique los campos.";
+                mostrarMensaje("Por favor, verifique los campos.");
             }
         }
         protected void btnEliminar_Click(object sender, EventArgs e)
         {
+            mostrarMensaje("La siguiente acción no podrá deshacerse ¿Desea continuar?", 1, 1);
+            Session["accion"] = "Eliminar";
+        }
+        private void EliminarProducto()
+        {
             id = (int)Session["id"];
 
-            nuevaImagen = imgProducto.ImageUrl;
+            if (imgProducto.ImageUrl != "")
+                nuevaImagen = imgProducto.ImageUrl;
             mProductos.EliminarProducto(id);
 
             if (nuevaImagen != "NoDisponible")
@@ -111,17 +115,17 @@ namespace _100DaysOfCode_ASP
         protected void gvRegistros_SelectedIndexChanged(object sender, EventArgs e)
         {
             int index = gvRegistros.SelectedIndex;
-            id = Convert.ToInt32(gvRegistros.Rows[index].Cells[1].Text);
+            id = Convert.ToInt32(gvRegistros.DataKeys[index].Value);
 
             Session["id"] = id;
 
             if (id > -1)
             {
-                txtCodigo.Text = gvRegistros.Rows[index].Cells[2].Text;
-                txtNombre.Text = gvRegistros.Rows[index].Cells[3].Text;
-                txtCantidad.Text = gvRegistros.Rows[index].Cells[4].Text;
-                txtPrecio.Text = gvRegistros.Rows[index].Cells[5].Text;
-                nuevaImagen = gvRegistros.Rows[index].Cells[6].Text;
+                txtCodigo.Text = gvRegistros.Rows[index].Cells[1].Text;
+                txtNombre.Text = gvRegistros.Rows[index].Cells[2].Text;
+                txtCantidad.Text = gvRegistros.Rows[index].Cells[3].Text;
+                txtPrecio.Text = gvRegistros.Rows[index].Cells[4].Text;
+                nuevaImagen = gvRegistros.Rows[index].Cells[5].Text;
 
                 if (nuevaImagen != "NoDisponible")
                 {
@@ -129,6 +133,7 @@ namespace _100DaysOfCode_ASP
                 }
                 else
                 {
+                    imgProducto.ImageUrl = "";
                     lblNodisponible.Visible = true;
                 }
 
@@ -164,6 +169,90 @@ namespace _100DaysOfCode_ASP
             pnlMensaje.Visible = false;
             lblMensaje.Text = "";
             lblNodisponible.Visible = false;
+        }
+
+        protected void btnAceptar_Click(object sender, EventArgs e)
+        {
+            pnlMensaje.Visible = false;
+            lblMensaje.Text = "";
+
+            string accion = "";
+            if(Session["accion"] != null)
+            {
+                accion = Session["accion"].ToString();
+                ejecutarAccion(accion);
+                Session["accion"] = null;
+            }
+        }
+        protected void btnNo_Click(object sender, EventArgs e)
+        {
+            pnlMensaje.Visible = false;
+            lblMensaje.Text = "";
+        }
+
+        protected void mostrarMensaje(string mensaje)
+        {
+            pnlMensaje.Visible = true;
+            imgIcono.Visible = false;
+            lblMensaje.Text = mensaje;
+            btnAceptar.Text = "Aceptar";
+            btnNo.Visible = false;
+        }
+        protected void mostrarMensaje(string mensaje, int opcion)
+        {
+            pnlMensaje.Visible = true;
+            lblMensaje.Text = mensaje;
+
+            switch (opcion)
+            {
+                case 1:
+                    btnAceptar.Text = "Si";
+                    btnNo.Visible = true;
+                    break;
+                default:
+                    btnAceptar.Text = "Aceptar";
+                    btnNo.Visible = false;
+                    break;
+            }
+        }
+        protected void mostrarMensaje(string mensaje, int opcion, int icono)
+        {
+            string rutaIcono = "http://" + HttpContext.Current.Request.Url.Authority + "/Iconos/";
+
+            pnlMensaje.Visible = true;
+            lblMensaje.Text = mensaje;
+            imgIcono.Visible = true;
+
+            switch (opcion)
+            {
+                case 1:
+                    btnAceptar.Text = "Si";
+                    btnNo.Visible = true;
+                    break;
+                default:
+                    btnAceptar.Text = "Aceptar";
+                    btnNo.Visible = false;
+                    break;
+            }
+
+            switch (icono)
+            {
+                case 1:
+                    imgIcono.ImageUrl = rutaIcono + "warning.png";
+                    break;
+                default:
+                    imgIcono.ImageUrl = rutaIcono +"info.png";
+                    break;
+            }
+        }
+        protected void ejecutarAccion(string accion)
+        {
+            switch (accion)
+            {
+                case "Eliminar":
+                    EliminarProducto();
+                    break;
+            }
         }
     }
 }
