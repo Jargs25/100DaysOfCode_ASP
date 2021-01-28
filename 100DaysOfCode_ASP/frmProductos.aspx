@@ -45,7 +45,8 @@
         <asp:Panel ID="pnlRegistros" runat="server" Width="400px" GroupingText="Registros">
             <asp:GridView ID="gvRegistros" runat="server" AutoGenerateColumns="False" AutoGenerateSelectButton="True" OnSelectedIndexChanged="gvRegistros_SelectedIndexChanged">
                 <Columns>
-                    <asp:BoundField DataField="codigo" HeaderText="Codigo" Visible="False" />
+                    <asp:BoundField DataField="id" HeaderText="ID" Visible="False" />
+                    <asp:BoundField DataField="codigo" HeaderText="Codigo" />
                     <asp:BoundField DataField="nombre" HeaderText="Nombre" />
                     <asp:BoundField DataField="cantidad" HeaderText="Cantidad" />
                     <asp:BoundField DataField="precio" HeaderText="Precio" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web;
@@ -10,7 +11,7 @@ namespace _100DaysOfCode_ASP
 {
     public partial class frmProductos : System.Web.UI.Page
     {
-        List<productos> lstProductos = new List<productos>();
+        modelo_productos mProductos = new modelo_productos();
         string rutaImagen;
         string nuevaImagen = "NoDisponible";
 
@@ -18,16 +19,14 @@ namespace _100DaysOfCode_ASP
         protected void Page_Load(object sender, EventArgs e)
         {
             rutaImagen = Server.MapPath("~/Productos/");
+            gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
+            gvRegistros.DataBind();
         }
 
         protected void btnAgregar_Click(object sender, EventArgs e)
         {
             if (sonValidos())
             {
-                lstProductos = (List<productos>)Session["Productos"];
-                if (lstProductos == null)
-                    lstProductos = new List<productos>();
-
                 if (fudImagen.HasFile)
                 {
                     string archivo = Path.GetFileName(fudImagen.FileName);
@@ -35,11 +34,9 @@ namespace _100DaysOfCode_ASP
                     fudImagen.SaveAs(rutaImagen + archivo);
                 }
 
-                lstProductos.Add(new productos("0000", txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()), nuevaImagen));
+                mProductos.AgregarProducto(new productos("0000", txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()), nuevaImagen));
 
-                Session["Productos"] = lstProductos;
-
-                gvRegistros.DataSource = lstProductos;
+                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
                 gvRegistros.DataBind();
 
                 limpiarCampos();
@@ -54,11 +51,9 @@ namespace _100DaysOfCode_ASP
         {
             if (sonValidos())
             {
-                lstProductos = (List<productos>)Session["Productos"];
                 id = (int)Session["id"];
 
-                productos oProducto = lstProductos[id];
-                nuevaImagen = oProducto.rutaImagen;
+                nuevaImagen = imgProducto.ImageUrl;
 
                 if (fudImagen.HasFile)
                 {
@@ -66,16 +61,11 @@ namespace _100DaysOfCode_ASP
                     nuevaImagen = "http://"+HttpContext.Current.Request.Url.Authority + "/Productos/" + archivo;
                     fudImagen.SaveAs(rutaImagen + archivo);
                 }
+                productos oProducto = new productos("0000", txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()), nuevaImagen);
+                oProducto.id = id;
+                mProductos.ModificarProducto(oProducto);
 
-                oProducto.codigo = "000000";
-                oProducto.nombre = txtNombre.Text.Trim();
-                oProducto.cantidad = Convert.ToInt32(txtCantidad.Text.Trim());
-                oProducto.precio = Convert.ToDouble(txtPrecio.Text.Trim());
-                oProducto.rutaImagen = nuevaImagen;
-
-                Session["Productos"] = lstProductos;
-
-                gvRegistros.DataSource = lstProductos;
+                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
                 gvRegistros.DataBind();
 
                 limpiarCampos();
@@ -88,53 +78,30 @@ namespace _100DaysOfCode_ASP
         }
         protected void btnEliminar_Click(object sender, EventArgs e)
         {
-            lstProductos = (List<productos>)Session["Productos"];
             id = (int)Session["id"];
 
-            productos oProducto = lstProductos[id];
-            nuevaImagen = oProducto.rutaImagen;
-            lstProductos.RemoveAt(id);
+            nuevaImagen = imgProducto.ImageUrl;
+            mProductos.EliminarProducto(id);
+
             if (nuevaImagen != "NoDisponible")
-            File.Delete(rutaImagen + nuevaImagen.Split('/')[4]);
+                File.Delete(rutaImagen + nuevaImagen.Split('/')[4]);
 
-            Session["Productos"] = lstProductos;
-
-            gvRegistros.DataSource = lstProductos;
+            gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
             gvRegistros.DataBind();
 
             limpiarCampos();
-
         }
         protected void btnBuscar_Click(object sender, EventArgs e)
         {
-            lstProductos = (List<productos>)Session["Productos"];
-            if (lstProductos == null)
-                lstProductos = new List<productos>();
-
             if (btnBuscar.Text != "Limpiar")
             {
-                List<productos> filtro = new List<productos>();
-
-                for (int i = 0; i < lstProductos.Count; i++)
-                {
-                    productos oProducto = lstProductos[i];
-
-                    if (oProducto.codigo.Contains(txtCodigo.Text.Trim()) &&
-                        oProducto.nombre.ToUpper().Contains(txtNombre.Text.Trim().ToUpper()) &&
-                        oProducto.cantidad.ToString().Contains(txtCantidad.Text.Trim()) &&
-                        oProducto.precio.ToString().Contains(txtPrecio.Text.Trim()))
-                    {
-                        filtro.Add(oProducto);
-                    }
-                }
-
                 pnlMensaje.Visible = false;
                 lblMensaje.Text = "";
-                gvRegistros.DataSource = filtro;
+                gvRegistros.DataSource = mProductos.BuscarProductos(new productos(txtCodigo.Text.Trim(), txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim() != "" ? txtCantidad.Text.Trim() : "0"), Convert.ToDouble(txtPrecio.Text.Trim() != "" ? txtPrecio.Text.Trim() : "0"), nuevaImagen));
             }
             else
             {
-                gvRegistros.DataSource = lstProductos;
+                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
                 limpiarCampos();
             }
                 gvRegistros.DataBind();
@@ -143,27 +110,28 @@ namespace _100DaysOfCode_ASP
         int id = -1;
         protected void gvRegistros_SelectedIndexChanged(object sender, EventArgs e)
         {
-            lstProductos = (List<productos>)Session["Productos"];
+            int index = gvRegistros.SelectedIndex;
+            id = Convert.ToInt32(gvRegistros.Rows[index].Cells[1].Text);
 
-            id = gvRegistros.SelectedIndex;
             Session["id"] = id;
 
             if (id > -1)
             {
-                productos oProducto = lstProductos[id];
-                txtCodigo.Text = oProducto.codigo;
-                txtNombre.Text = oProducto.nombre;
-                txtCantidad.Text = oProducto.cantidad.ToString();
-                txtPrecio.Text = oProducto.precio.ToString();
+                txtCodigo.Text = gvRegistros.Rows[index].Cells[2].Text;
+                txtNombre.Text = gvRegistros.Rows[index].Cells[3].Text;
+                txtCantidad.Text = gvRegistros.Rows[index].Cells[4].Text;
+                txtPrecio.Text = gvRegistros.Rows[index].Cells[5].Text;
+                nuevaImagen = gvRegistros.Rows[index].Cells[6].Text;
 
-                if(oProducto.rutaImagen != "NoDisponible")
+                if (nuevaImagen != "NoDisponible")
                 {
-                    imgProducto.ImageUrl = oProducto.rutaImagen;
+                    imgProducto.ImageUrl = nuevaImagen;
                 }
                 else
                 {
                     lblNodisponible.Visible = true;
                 }
+
                 btnAgregar.Enabled = false;
                 btnModificar.Enabled = true;
                 btnEliminar.Enabled = true;
