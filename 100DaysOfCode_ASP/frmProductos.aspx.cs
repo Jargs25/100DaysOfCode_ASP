@@ -80,7 +80,8 @@ namespace _100DaysOfCode_ASP
         {
             id = (int)Session["id"];
 
-            nuevaImagen = imgProducto.ImageUrl;
+            if (imgProducto.ImageUrl != "")
+                nuevaImagen = imgProducto.ImageUrl;
             mProductos.EliminarProducto(id);
 
             if (nuevaImagen != "NoDisponible")
