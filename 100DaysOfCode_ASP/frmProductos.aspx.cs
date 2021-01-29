@@ -18,6 +18,7 @@ namespace _100DaysOfCode_ASP
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            agregarEstilos();
             rutaImagen = Server.MapPath("~/Productos/");
             gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
             gvRegistros.DataBind();
@@ -130,6 +131,7 @@ namespace _100DaysOfCode_ASP
                 if (nuevaImagen != "NoDisponible")
                 {
                     imgProducto.ImageUrl = nuevaImagen;
+                    lblNodisponible.Visible = false;
                 }
                 else
                 {
@@ -169,6 +171,7 @@ namespace _100DaysOfCode_ASP
             pnlMensaje.Visible = false;
             lblMensaje.Text = "";
             lblNodisponible.Visible = false;
+            gvRegistros.SelectedIndex = -1;
         }
 
         protected void btnAceptar_Click(object sender, EventArgs e)
@@ -197,6 +200,8 @@ namespace _100DaysOfCode_ASP
             lblMensaje.Text = mensaje;
             btnAceptar.Text = "Aceptar";
             btnNo.Visible = false;
+            lblMensaje.Attributes.Remove("style");
+            lblMensaje.Attributes.Add("style","width: 400px; height: 100px; padding: 0px 8px; display: flex; justify-content: center; align-items: center;");
         }
         protected void mostrarMensaje(string mensaje, int opcion)
         {
@@ -214,6 +219,7 @@ namespace _100DaysOfCode_ASP
                     btnNo.Visible = false;
                     break;
             }
+            lblMensaje.Attributes.Add("style", "width: 400px; height: 100px; padding: 0px 8px; display: flex; text-align: center; align-items: center;");
         }
         protected void mostrarMensaje(string mensaje, int opcion, int icono)
         {
@@ -253,6 +259,59 @@ namespace _100DaysOfCode_ASP
                     EliminarProducto();
                     break;
             }
+        }
+
+        protected void agregarEstilos()
+        {
+            pintarPaneles();
+            pintarImagen();
+            pintarNoDisponible();
+            pintarFileUpload();
+            pintarTextBox();
+            pintarBotones();
+            pintarMensaje();
+        }
+        protected void pintarPaneles()
+        {
+            pnlDatos.Attributes.CssStyle.Add("display", "inline-block");
+            pnlRegistros.Attributes.CssStyle.Add("display", "inline-block");
+        }
+        protected void pintarImagen()
+        {
+            imgProducto.Attributes.CssStyle.Add("background-color", "white");
+        }
+        protected void pintarNoDisponible()
+        {
+            lblNodisponible.Attributes.Add("style", "position: absolute; left: 33px; top: 130px; width: 90px; display: inline-block; text-align: center;");
+        }
+        protected void pintarFileUpload()
+        {
+            fudImagen.Attributes.Add("style", "display:none");
+        }
+        protected void pintarTextBox()
+        {
+            string style = "width:124px; display:inline-block;";
+            txtCodigo.Attributes.Add("style", style);
+            txtNombre.Attributes.Add("style", style);
+            txtCantidad.Attributes.Add("style", style);
+            txtPrecio.Attributes.Add("style", style);
+        }
+        protected void pintarBotones()
+        {
+            string style = "width: 104px; background-color: #ffff88; border-color: yellow; margin-top: 4px; margin-right: 2px; font-size: 14px;";
+            btnAgregar.Attributes.Add("style", style);
+            btnModificar.Attributes.Add("style", style);
+            btnEliminar.Attributes.Add("style", style);
+            btnBuscar.Attributes.Add("style", style);
+        }
+        protected void pintarMensaje()
+        {
+            pnlMensaje.Attributes.Add("style", "display: inline-block; position: absolute; width: 100%; height: 100%; top: 0; left: 0; background-color: rgba(0, 0, 0, 0.4);");
+            imgIcono.Attributes.CssStyle.Add("background-color", "white");
+            lblMensaje.Attributes.Add("style", "width: 300px; height: 100px; padding: 0px 8px; display: flex; justify-content: center; align-items: center;");
+            string style = "width: 100px; background-color: #ffff88; border-color: yellow;";
+            btnAceptar.Attributes.Add("style", style);
+            btnNo.Attributes.Add("style", style);
         }
     }
 }
