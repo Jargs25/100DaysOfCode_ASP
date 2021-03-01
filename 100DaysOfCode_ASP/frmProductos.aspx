@@ -104,7 +104,7 @@
             </div>
         </asp:Panel>
         <asp:Panel ID="pnlRegistros" runat="server" Width="400px" GroupingText="Registros">
-            <asp:GridView ID="gvRegistros" runat="server" AutoGenerateColumns="False" AutoGenerateSelectButton="True" OnSelectedIndexChanged="gvRegistros_SelectedIndexChanged" DataKeyNames="id" SelectedRowStyle-BackColor="#ffff88">
+            <asp:GridView ID="gvRegistros" runat="server" AutoGenerateColumns="False" AutoGenerateSelectButton="True" OnSelectedIndexChanged="gvRegistros_SelectedIndexChanged" DataKeyNames="id, imagen" SelectedRowStyle-BackColor="#ffff88">
                 <Columns>
                     <asp:BoundField DataField="codigo" HeaderText="Codigo" />
                     <asp:BoundField DataField="nombre" HeaderText="Nombre" />

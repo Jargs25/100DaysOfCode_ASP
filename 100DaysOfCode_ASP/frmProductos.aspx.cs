@@ -1,4 +1,5 @@
-﻿using System;
+﻿using _100DaysOfCode_ASP.WCFProductos;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -11,17 +12,17 @@ namespace _100DaysOfCode_ASP
 {
     public partial class frmProductos : System.Web.UI.Page
     {
-        modelo_productos mProductos = new modelo_productos();
-        string rutaImagen;
+        WCFProductoClient svcProductos = new WCFProductoClient();
         string nuevaImagen = "NoDisponible";
-
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            agregarEstilos();
-            rutaImagen = Server.MapPath("~/Productos/");
-            gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
-            gvRegistros.DataBind();
+            if (!IsPostBack)
+            {
+                agregarEstilos();
+                gvRegistros.DataSource = svcProductos.BuscarProductos(GetProducto());
+                gvRegistros.DataBind();
+            }
         }
 
         protected void btnAgregar_Click(object sender, EventArgs e)
@@ -29,16 +30,13 @@ namespace _100DaysOfCode_ASP
             if (sonValidos())
             {
                 if (fudImagen.HasFile)
-                {
-                    string archivo = Path.GetFileName(fudImagen.FileName);
-                    nuevaImagen = "http://"+HttpContext.Current.Request.Url.Authority + "/Productos/" + archivo;
-                    fudImagen.SaveAs(rutaImagen + archivo);
-                }
+                    nuevaImagen = Path.GetFileName(fudImagen.FileName);
 
-                mProductos.AgregarProducto(new productos("0000", txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()), nuevaImagen));
+                Producto oProducto = GetProducto(txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()));
+                oProducto.rutaImagen = nuevaImagen;
+                oProducto.imagen = fudImagen.FileBytes;
 
-                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
-                gvRegistros.DataBind();
+                svcProductos.AgregarProducto(oProducto);
 
                 limpiarCampos();
             }
@@ -52,21 +50,17 @@ namespace _100DaysOfCode_ASP
             if (sonValidos())
             {
                 id = (int)Session["id"];
-
-                nuevaImagen = imgProducto.ImageUrl;
+                nuevaImagen = Session["nuevaImagen"].ToString();
 
                 if (fudImagen.HasFile)
-                {
-                    string archivo = Path.GetFileName(fudImagen.FileName);
-                    nuevaImagen = "http://"+HttpContext.Current.Request.Url.Authority + "/Productos/" + archivo;
-                    fudImagen.SaveAs(rutaImagen + archivo);
-                }
-                productos oProducto = new productos("0000", txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()), nuevaImagen);
-                oProducto.id = id;
-                mProductos.ModificarProducto(oProducto);
+                    nuevaImagen = fudImagen.FileName;
 
-                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
-                gvRegistros.DataBind();
+                Producto oProducto = GetProducto(txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim()), Convert.ToDouble(txtPrecio.Text.Trim()));
+                oProducto.rutaImagen = nuevaImagen;
+                oProducto.imagen = fudImagen.FileBytes;
+                oProducto.id = id;
+
+                svcProductos.ModificarProducto(oProducto);
 
                 limpiarCampos();
             }
@@ -83,16 +77,11 @@ namespace _100DaysOfCode_ASP
         private void EliminarProducto()
         {
             id = (int)Session["id"];
+            Producto oProducto = GetProducto();
+            oProducto.id = id;
+            oProducto.rutaImagen = Session["nuevaImagen"].ToString();
 
-            if (imgProducto.ImageUrl != "")
-                nuevaImagen = imgProducto.ImageUrl;
-            mProductos.EliminarProducto(id);
-
-            if (nuevaImagen != "NoDisponible")
-                File.Delete(rutaImagen + nuevaImagen.Split('/')[4]);
-
-            gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
-            gvRegistros.DataBind();
+            svcProductos.EliminarProducto(oProducto);
 
             limpiarCampos();
         }
@@ -102,14 +91,16 @@ namespace _100DaysOfCode_ASP
             {
                 pnlMensaje.Visible = false;
                 lblMensaje.Text = "";
-                gvRegistros.DataSource = mProductos.BuscarProductos(new productos(txtCodigo.Text.Trim(), txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim() != "" ? txtCantidad.Text.Trim() : "0"), Convert.ToDouble(txtPrecio.Text.Trim() != "" ? txtPrecio.Text.Trim() : "0"), nuevaImagen));
+                Producto oProducto = GetProducto(txtNombre.Text.Trim(), Convert.ToInt32(txtCantidad.Text.Trim() != "" ? txtCantidad.Text.Trim() : "0"), Convert.ToDouble(txtPrecio.Text.Trim() != "" ? txtPrecio.Text.Trim() : "0"));
+                oProducto.codigo = txtCodigo.Text.Trim();
+
+                gvRegistros.DataSource = svcProductos.BuscarProductos(oProducto);
+                gvRegistros.DataBind();
             }
             else
             {
-                gvRegistros.DataSource = mProductos.BuscarProductos(new productos());
                 limpiarCampos();
             }
-                gvRegistros.DataBind();
         }
 
         int id = -1;
@@ -117,10 +108,11 @@ namespace _100DaysOfCode_ASP
         {
             int index = gvRegistros.SelectedIndex;
             id = Convert.ToInt32(gvRegistros.DataKeys[index].Value);
+            byte[] image = (byte[])gvRegistros.DataKeys[index].Values["imagen"];
 
             Session["id"] = id;
 
-            if (id > -1)
+            if (index > -1)
             {
                 txtCodigo.Text = gvRegistros.Rows[index].Cells[1].Text;
                 txtNombre.Text = gvRegistros.Rows[index].Cells[2].Text;
@@ -128,9 +120,9 @@ namespace _100DaysOfCode_ASP
                 txtPrecio.Text = gvRegistros.Rows[index].Cells[4].Text;
                 nuevaImagen = gvRegistros.Rows[index].Cells[5].Text;
 
-                if (nuevaImagen != "NoDisponible")
+                if (nuevaImagen != "NoDisponible" && image != null)
                 {
-                    imgProducto.ImageUrl = nuevaImagen;
+                    imgProducto.ImageUrl = "data:image/"+nuevaImagen.Split('.')[1]+";base64,"+Convert.ToBase64String(image);
                     lblNodisponible.Visible = false;
                 }
                 else
@@ -138,6 +130,8 @@ namespace _100DaysOfCode_ASP
                     imgProducto.ImageUrl = "";
                     lblNodisponible.Visible = true;
                 }
+
+                Session["nuevaImagen"] = nuevaImagen;
 
                 btnAgregar.Enabled = false;
                 btnModificar.Enabled = true;
@@ -157,6 +151,8 @@ namespace _100DaysOfCode_ASP
         }
         public void limpiarCampos()
         {
+            gvRegistros.DataSource = svcProductos.BuscarProductos(GetProducto());
+            gvRegistros.DataBind();
             txtCodigo.Text = "";
             txtNombre.Text = "";
             txtCantidad.Text = "";
@@ -312,6 +308,33 @@ namespace _100DaysOfCode_ASP
             string style = "width: 100px; background-color: #ffff88; border-color: yellow;";
             btnAceptar.Attributes.Add("style", style);
             btnNo.Attributes.Add("style", style);
+        }
+
+        public Producto GetProducto()
+        {
+            Producto oProducto = new Producto();
+
+            oProducto.id = 0;
+            oProducto.codigo = "";
+            oProducto.nombre = "";
+            oProducto.cantidad = 0;
+            oProducto.precio = 0;
+            oProducto.rutaImagen = "NoDisponible";
+
+            return oProducto;
+        }
+        public Producto GetProducto(string nombre, int cantidad, double precio)
+        {
+            Producto oProducto = new Producto();
+
+            oProducto.id = 0;
+            oProducto.codigo = "";
+            oProducto.nombre = nombre;
+            oProducto.cantidad = cantidad;
+            oProducto.precio = precio;
+            oProducto.rutaImagen = "NoDisponible";
+
+            return oProducto;
         }
     }
 }
